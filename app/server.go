@@ -16,9 +16,11 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println(":: Listening on port 6379.. ")
-	_, err = l.Accept()
+	conn, err := l.Accept()
+
 	if err != nil {
 		fmt.Printf("Error accepting conns: %v", err)
 		os.Exit(1)
 	}
+	conn.Write([]byte("+PONG\r\n"))
 }
