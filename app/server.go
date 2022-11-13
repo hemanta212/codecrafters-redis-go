@@ -51,11 +51,11 @@ func handleConn(conn net.Conn) {
 		command := strings.TrimSpace(string(msg[:msglen]))
 		fmt.Println(":: Got command: ", strconv.Quote(command))
 
-		stringSlice := strings.Split(command, "\r\n")
-		echoedWord := stringSlice[4]
-		// fmt.Println(":: List: ", stringSlice)
-
 		if strings.Contains(string(msg), "ECHO") {
+			stringSlice := strings.Split(command, "\r\n")
+			echoedWord := stringSlice[4]
+			// fmt.Println(":: List: ", stringSlice)
+
 			output := fmt.Sprintf("+%s\r\n", echoedWord)
 			// fmt.Println(":: Writing result as: ", strconv.Quote(output))
 			conn.Write([]byte(output))
