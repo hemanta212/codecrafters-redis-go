@@ -22,27 +22,28 @@ func main() {
 	for {
 		// Waiting for the connection
 		conn, err := l.Accept()
-		fmt.Println("Got connected", conn.RemoteAddr())
+		fmt.Println(":: Got connected", conn.RemoteAddr())
 		if err != nil {
-			fmt.Printf("Error accepting conns: %v", err)
+			fmt.Printf(":: Error accepting conns: %v", err)
 			os.Exit(1)
 		}
 
 		go func(conn net.Conn) {
 			defer conn.Close()
 			msg := make([]byte, 4028)
-			if _, err := conn.Read(msg); err != nil {
-				if err == io.EOF {
-					return
-				} else {
-					fmt.Println("Error reading from client: ", err.Error())
-					os.Exit(1)
-				}
+			for {
+				if _, err := conn.Read(msg); err != nil {
+					if err == io.EOF {
+						return
+					} else {
+						fmt.Println(":: Error reading from client: ", err.Error())
+						os.Exit(1)
+					}
 
+				}
+				fmt.Println(":: Got command: ", string(msg))
+				conn.Write([]byte("+PONG\r\n"))
 			}
-			fmt.Println("Got command: ", string(msg))
-			conn.Write([]byte("+PONG\r\n"))
-			fmt.Println("closing connection: ", conn.RemoteAddr())
 		}(conn)
 	}
 }
