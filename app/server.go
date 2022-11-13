@@ -5,6 +5,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -28,22 +30,37 @@ func main() {
 			os.Exit(1)
 		}
 
-		go func(conn net.Conn) {
-			defer conn.Close()
-			msg := make([]byte, 4028)
-			for {
-				if _, err := conn.Read(msg); err != nil {
-					if err == io.EOF {
-						return
-					} else {
-						fmt.Println(":: Error reading from client: ", err.Error())
-						os.Exit(1)
-					}
+		go handleConn(conn)
+	}
+}
 
-				}
-				fmt.Println(":: Got command: ", string(msg))
-				conn.Write([]byte("+PONG\r\n"))
+func handleConn(conn net.Conn) {
+	defer conn.Close()
+	for {
+		msg := make([]byte, 1024)
+		msglen, err := conn.Read(msg)
+		if err != nil {
+			if err == io.EOF {
+				return
+			} else {
+				fmt.Println(":: Error reading from client: ", err.Error())
+				os.Exit(1)
 			}
-		}(conn)
+
+		}
+		command := strings.TrimSpace(string(msg[:msglen]))
+		fmt.Println(":: Got command: ", strconv.Quote(command))
+
+		stringSlice := strings.Split(command, "\r\n")
+		echoedWord := stringSlice[4]
+		// fmt.Println(":: List: ", stringSlice)
+
+		if strings.Contains(string(msg), "ECHO") {
+			output := fmt.Sprintf("+%s\r\n", echoedWord)
+			// fmt.Println(":: Writing result as: ", strconv.Quote(output))
+			conn.Write([]byte(output))
+		} else {
+			conn.Write([]byte("+PONG\r\n"))
+		}
 	}
 }
