@@ -15,14 +15,21 @@ func main() {
 		fmt.Printf("Error binding tcp listener: %v", err)
 		os.Exit(1)
 	}
+	defer l.Close()
 	fmt.Println(":: Listening on port 6379.. ")
+	// Waiting for the connection
 	for {
 		conn, err := l.Accept()
-	if err != nil {
-		fmt.Printf("Error accepting conns: %v", err)
-		os.Exit(1)
-	}
-
+		fmt.Println("Got connected", conn.RemoteAddr())
+		if err != nil {
+			fmt.Printf("Error accepting conns: %v", err)
+			os.Exit(1)
+		}
+		msg := make([]byte, 4028)
+		len, _ := conn.Read(msg)
+		fmt.Println("Got command: ", string(msg[:len]))
 		conn.Write([]byte("+PONG\r\n"))
+		fmt.Println("closing connection: ", conn.RemoteAddr())
+		conn.Close()
 	}
 }
