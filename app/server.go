@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+var db = map[string]string{}
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
@@ -54,9 +56,21 @@ func handleConn(conn net.Conn) {
 
 		if command == "echo" {
 			echoedWord := args[0]
-			output := fmt.Sprintf("+%s\r\n", echoedWord)
+			output := fmt.Sprintf("$%d\r\n%s\r\n", len(echoedWord), echoedWord)
 			// fmt.Println(":: Writing result as: ", strconv.Quote(output))
 			conn.Write([]byte(output))
+		} else if command == "set" {
+			key, value := args[0], args[1]
+			db[key] = value
+			conn.Write([]byte("+OK\r\n"))
+		} else if command == "get" {
+			key := args[0]
+			value, found := db[key]
+			if found {
+				conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(value), value)))
+			} else {
+				conn.Write([]byte("$-1\r\n"))
+			}
 		} else {
 			conn.Write([]byte("+PONG\r\n"))
 		}
