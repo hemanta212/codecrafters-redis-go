@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-var db = map[string]string{}
-
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
@@ -21,6 +19,7 @@ func main() {
 	}
 	defer l.Close()
 	fmt.Println(":: Listening on port 6379.. ")
+	storage := NewKeyValueStore()
 
 	for {
 		// Waiting for the connection
@@ -31,11 +30,11 @@ func main() {
 			os.Exit(1)
 		}
 
-		go handleConn(conn)
+		go handleConn(conn, storage)
 	}
 }
 
-func handleConn(conn net.Conn) {
+func handleConn(conn net.Conn, storage *KeyValueStore) {
 	defer conn.Close()
 	for {
 		msg := make([]byte, 1024)
@@ -61,11 +60,10 @@ func handleConn(conn net.Conn) {
 			conn.Write([]byte(output))
 		} else if command == "set" {
 			key, value := args[0], args[1]
-			db[key] = value
+			storage.Set(key, value)
 			conn.Write([]byte("+OK\r\n"))
 		} else if command == "get" {
-			key := args[0]
-			value, found := db[key]
+			value, found := storage.Get(args[0])
 			if found {
 				conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(value), value)))
 			} else {
