@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -48,14 +47,13 @@ func handleConn(conn net.Conn) {
 			}
 
 		}
+
 		message := strings.TrimSpace(string(msg[:msglen]))
-		messageSlice := strings.Split(message, "\r\n")
-		// fmt.Println(":: List: ", stringSlice)
-		command := strings.ToLower(messageSlice[2])
-		fmt.Println(":: Got message: ", strconv.Quote(message), "command: ", command)
+		value := decodeRESP(message)
+		command, args := strings.ToLower(value[0]), value[1:]
 
 		if command == "echo" {
-			echoedWord := messageSlice[4]
+			echoedWord := args[0]
 			output := fmt.Sprintf("+%s\r\n", echoedWord)
 			// fmt.Println(":: Writing result as: ", strconv.Quote(output))
 			conn.Write([]byte(output))
@@ -63,4 +61,18 @@ func handleConn(conn net.Conn) {
 			conn.Write([]byte("+PONG\r\n"))
 		}
 	}
+}
+
+func decodeRESP(message string) []string {
+	messageSlice := strings.Split(message, "\r\n")
+	fmt.Println(":: Message content: ", messageSlice)
+	value := []string{}
+	// discard the first two RESP spec keywords and pick out the commands at even interval
+	for i, item := range messageSlice[2:] {
+		if i%2 == 0 {
+			value = append(value, item)
+		}
+	}
+	fmt.Println(":: Parsed: ", value)
+	return value
 }
