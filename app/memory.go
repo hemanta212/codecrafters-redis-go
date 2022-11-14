@@ -17,3 +17,7 @@ func (store *KeyValueStore) Set(key, value string) bool {
 	store.data[key] = value
 	return true
 }
+
+func (store *KeyValueStore) Delete(key string) {
+	delete(store.data, key)
+}

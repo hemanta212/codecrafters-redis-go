@@ -5,7 +5,9 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -60,6 +62,11 @@ func handleConn(conn net.Conn, storage *KeyValueStore) {
 			conn.Write([]byte(output))
 		} else if command == "set" {
 			key, value := args[0], args[1]
+			if len(args) > 3 {
+				px := args[3]
+				duration, _ := strconv.Atoi(px)
+				go time.AfterFunc(time.Duration(duration)*time.Millisecond, func() { storage.Delete(key) })
+			}
 			storage.Set(key, value)
 			conn.Write([]byte("+OK\r\n"))
 		} else if command == "get" {
